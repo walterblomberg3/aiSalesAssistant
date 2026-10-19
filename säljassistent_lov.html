@@ -18,6 +18,15 @@ button, .pdf-btn { cursor:pointer; transition:background .15s, border-color .15s
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
 button:disabled { opacity:.45; cursor:not-allowed; }
 a { color:var(--foreground); text-underline-offset:3px; }
+/* ── Dial bar ── */
+.dial-bar { border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:14px 0; margin-bottom:20px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .dial-label { font-size:11px; font-weight:600; color:var(--muted-foreground); white-space:nowrap; }
+  .dial-input { flex:1; min-width:180px; max-width:380px; height:42px; font-size:14px; letter-spacing:0.04em; }
+  .dial-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 16px; border:1px solid var(--primary); border-radius:5px; background:var(--primary); color:var(--primary-foreground); font-size:13px; font-weight:500; min-height:42px; white-space:nowrap; }
+  .dial-btn:hover { background:var(--muted-foreground); }
+  .dial-btn.calling { background:var(--destructive); border-color:var(--destructive); }
+  .dial-hint { width:100%; font-size:11px; color:var(--muted-foreground); }
+  .dial-hint a { color:var(--muted-foreground); text-decoration:underline; }
 .hidden { display:none !important; }
 .brand-mark { display:inline-grid; place-items:center; width:30px; height:30px; background:var(--primary); color:var(--primary-foreground); border-radius:6px; flex:none; vertical-align:middle; }
 .brand-mark svg { width:18px; height:18px; }
@@ -248,6 +257,13 @@ input::placeholder, textarea::placeholder { color:var(--muted-foreground); opaci
 <header class="app-topbar"><h1><span class="brand"><span class="brand-mark"><svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M4 14l4-8 4 12 4-12 4 8"></path></svg></span><span>AI Säljassistent</span></span></h1><span class="role-badge" id="role-badge"></span><button class="logout-btn hidden" id="settings-btn" onclick="openSettings()">⚙ Inställningar</button><button class="logout-btn" onclick="logout()">Logga ut</button></header>
 <div class="workspace">
 <div class="page-heading"><div><div class="department-line"><span>Avdelning</span><strong id="active-department"></strong><button class="small-btn" onclick="openInstructions()" title="Avdelningens instruktioner" aria-label="Avdelningens instruktioner">ⓘ</button></div><h2 id="call-heading">Ditt nästa samtal</h2></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="phase-pill" id="sales-phase-badge">Fas 1 · Inledning</span><div class="status-pill" id="call-status" role="status"><span class="dot" id="mic-dot"></span><span id="call-status-text">Redo att börja</span></div></div></div>
+<!-- Ring upp via Linphone + 46elks -->
+  <div class="dial-bar" id="dial-bar">
+    <span class="dial-label">📞 Ring kund</span>
+    <input class="dial-input" id="dial-number" type="tel" placeholder="0701234567" />
+    <button class="dial-btn" id="dial-btn" onclick="makeCall()">Ring upp via Linphone</button>
+    <div class="dial-hint">Kräver Linphone installerat och konfigurerat med 46elks. <a href="https://www.linphone.org/en/getting-started/" target="_blank">Ladda ned Linphone →</a></div>
+  </div>
 <div class="context-strip"><div><div class="config-row hidden" id="admin-context">
 <label for="customer-type">Kundens situation</label>
 <input id="customer-type" placeholder="Till exempel familj som vill flytta till större" type="text" value="en granne till en kund vars bostad vi nyligen sålt i området"/>
@@ -339,6 +355,39 @@ let activeProfileName = '';
 let savedEditor = '';
 let loadingProfile = false;
 let confirmationAction = null;
+
+// Ring via linphone, 46elks
+let dialActive = false;
+ 
+function makeCall() {
+  const number = document.getElementById('dial-number').value.trim();
+  if (!number) { showCallError('Ange ett telefonnummer att ringa.'); return; }
+  if (dialActive) { endDialCall(); return; }
+ 
+  let cleaned = number.replace(/[\s\-\.]/g, '');
+  if (cleaned.startsWith('00')) cleaned = cleaned.slice(2);
+  else if (cleaned.startsWith('0')) cleaned = '46' + cleaned.slice(1);
+  else if (cleaned.startsWith('+')) cleaned = cleaned.slice(1);
+ 
+  window.location.href = 'sip:' + cleaned + '@voip.46elks.com';
+ 
+  dialActive = true;
+  const btn = document.getElementById('dial-btn');
+  btn.classList.add('calling');
+  btn.textContent = '📵 Avsluta samtal';
+ 
+  setTimeout(() => {
+    if (callPhase === 'ready' && !isListening) startListening();
+  }, 1500);
+}
+ 
+function endDialCall() {
+  dialActive = false;
+  const btn = document.getElementById('dial-btn');
+  btn.classList.remove('calling');
+  btn.textContent = 'Ring upp via Linphone';
+  stopListening();
+}
 
 async function login(event) {
   event.preventDefault();
@@ -495,6 +544,7 @@ function startNewConversation() {
   resetConversation();
 }
 function resetConversation() {
+  if (typeof dialActive !== 'undefined' && dialActive) endDialCall();
   stopListening();
   pendingText = '';
   conversationHistory = [];
@@ -915,6 +965,7 @@ async function analyzeStreaming(text) {
   }
 
   isStreaming = false;
+  
   updateAnalyzeBtn(pendingText.trim().length > 0);
   syncCallUI();
   setStatus(callPhase === 'finished' ? 'Samtalet är avslutat' : isListening ? 'Lyssnar' : 'Lyssning stoppad');
@@ -1102,6 +1153,7 @@ function stopListening() {
 function finishConversation() {
   if (callPhase !== 'active') return;
   callPhase = 'finished';
+  if (typeof dialActive !== 'undefined' && dialActive) endDialCall();
   stopListening();
   showCallError('');
   syncCallUI();
@@ -1129,6 +1181,8 @@ function syncCallUI() {
   document.getElementById('customer-type').disabled = active || finished;
   document.getElementById('employee-customer-type').disabled = active || finished;
   document.getElementById('settings-btn').disabled = active || isStreaming;
+  const dialBar = document.getElementById('dial-bar');
+  if (dialBar) dialBar.style.display = (active || finished) ? 'none' : 'flex';
   updateAnalyzeBtn(pendingText.trim().length > 0);
 }
 function updateSalesPhaseBadge() {
