@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#ffffff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AI Säljcoach"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/svg+xml" href="./icon.svg"><link rel="apple-touch-icon" href="./icon.svg"><title>AI Säljassistent – Samtalsstöd</title><meta name="description" content="Samtalsstöd och AI-förslag i realtid."><style>
+:root {
+  --background: oklch(.983 0 0); --foreground: oklch(.19 0 0);
+  --surface: oklch(1 0 0); --muted: oklch(.955 0 0); --muted-foreground: oklch(.49 0 0);
+  --border: oklch(.895 0 0); --primary: oklch(.19 0 0); --primary-foreground: oklch(1 0 0);
+  --accent: oklch(.96 .02 162); --accent-foreground: oklch(.34 .065 164);
+  --success: oklch(.46 .11 153); --success-soft: oklch(.955 .028 153);
+  --destructive: oklch(.50 .16 26); --destructive-soft: oklch(.96 .02 26);
+  --warning: oklch(.46 .09 80); --warning-soft: oklch(.965 .035 88);
+  --ring: oklch(.48 .08 164); --shadow: 0 4px 20px oklch(.19 0 0 / .035);
+  --font-body: 'Arial', 'Helvetica Neue', sans-serif; --font-display: Georgia, 'Times New Roman', serif;
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--background); color:var(--foreground); font:14px/1.5 var(--font-body); min-height:100vh; letter-spacing:0; }
+button, input, select, textarea { font:inherit; letter-spacing:0; }
+button, .pdf-btn { cursor:pointer; transition:background .15s, border-color .15s; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+button:disabled { opacity:.45; cursor:not-allowed; }
+a { color:var(--foreground); text-underline-offset:3px; }
+.hidden { display:none !important; }
+.brand-mark { display:inline-grid; place-items:center; width:30px; height:30px; background:var(--primary); color:var(--primary-foreground); border-radius:6px; flex:none; vertical-align:middle; }
+.brand-mark svg { width:18px; height:18px; }
+.brand { display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-size:19px; line-height:1.2; }
+.icon { width:16px; height:16px; flex:none; vertical-align:middle; }
+.login-shell { min-height:100vh; display:grid; grid-template-rows:auto 1fr auto; }
+.login-topbar { padding:24px 36px; border-bottom:1px solid var(--border); background:var(--surface); }
+.login-card { width:min(400px, calc(100% - 40px)); margin:64px auto; align-self:center; }
+.login-card .login-symbol { display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--border); border-radius:8px; background:var(--surface); margin-bottom:24px; }
+.login-card h1 { font:400 38px/1.15 var(--font-display); margin-bottom:14px; }
+.login-card p { font-size:14px; color:var(--muted-foreground); line-height:1.7; margin-bottom:30px; }
+.login-field { display:grid; gap:8px; margin-bottom:18px; }
+.login-field label { font-size:13px; font-weight:600; }
+input, select, textarea { border:1px solid var(--border); border-radius:5px; background:var(--surface); color:var(--foreground); width:100%; padding:10px 11px; min-width:0; }
+input::placeholder, textarea::placeholder { color:var(--muted-foreground); opacity:.8; }
+.login-field input { min-height:46px; }
+.login-btn { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; min-height:46px; border:1px solid var(--primary); border-radius:5px; background:var(--primary); color:var(--primary-foreground); font-weight:600; margin-top:8px; }
+.login-btn:hover { background:var(--muted-foreground); }
+.login-error { min-height:20px; color:var(--destructive); font-size:12px; margin-top:10px; }
+.invite-setup-shell { min-height:100vh; display:grid; grid-template-rows:auto 1fr auto; }
+.demo-accounts { border-top:1px solid var(--border); margin-top:18px; padding-top:18px; font-size:12px; color:var(--muted-foreground); line-height:1.8; }
+.login-footer { border-top:1px solid var(--border); padding:18px 36px; color:var(--muted-foreground); font-size:12px; }
+.figure-scene { display:none; }
+.app-topbar { display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); padding:20px 32px; background:var(--surface); }
+.app-topbar h1 { margin-right:auto; font-weight:400; }
+.role-badge { padding:5px 9px; border:1px solid var(--border); border-radius:4px; color:var(--muted-foreground); font-size:11px; }
+.new-call-btn, .logout-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid var(--border); border-radius:5px; padding:9px 12px; font-size:12px; background:var(--surface); color:var(--foreground); white-space:nowrap; }
+.new-call-btn { background:var(--primary); border-color:var(--primary); color:var(--primary-foreground); }
+.new-call-btn:hover { background:var(--muted-foreground); }
+.logout-btn:hover { background:var(--muted); }
+.workspace { display:grid; grid-template-columns:342px minmax(0,1fr); min-height:calc(100vh - 79px); max-width:1800px; margin:0 auto; }
+.settings-column { border-right:1px solid var(--border); padding:28px 24px; background:var(--surface); max-height:calc(100vh - 79px); overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.section-heading { display:flex; align-items:center; gap:10px; margin-bottom:25px; }
+.section-heading .section-number { font-size:11px; color:var(--muted-foreground); border:1px solid var(--border); border-radius:4px; width:25px; height:25px; display:grid; place-items:center; }
+.section-heading h2 { font-size:14px; font-weight:600; }
+.config-panel { display:flex; flex-direction:column; gap:20px; }
+.config-row { display:flex; flex-direction:column; gap:7px; align-items:stretch; min-width:0; }
+.config-row > label { font-size:12px; font-weight:600; }
+.config-row > label:empty { display:none; }
+.config-row input { font-size:12px; }
+.hint { color:var(--muted-foreground); font-size:11px; }
+.hint a { color:var(--muted-foreground); }
+.pdf-upload-area { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.pdf-btn { display:inline-flex; justify-content:center; align-items:center; gap:7px; padding:8px 10px; border:1px solid var(--border); border-radius:5px; background:var(--surface); color:var(--foreground); font-size:12px; }
+.pdf-btn:hover { background:var(--muted); }
+#pdf-status { color:var(--muted-foreground); font-size:11px; line-height:1.6; }
+#pdf-status.loaded { color:var(--success); } #pdf-status.error { color:var(--destructive); }
+.pdf-guide { border-left:2px solid var(--border); padding-left:12px; color:var(--muted-foreground); font-size:11px; line-height:1.6; }
+.pdf-guide strong { font-weight:600; color:var(--foreground); }
+.pdf-guide ul { padding-left:16px; margin:8px 0; } .pdf-guide li { margin-bottom:5px; } .pdf-example { margin:8px 0; }
+.playbook-panel { border-top:1px solid var(--border); padding-top:22px; }
+.playbook-heading { display:flex; flex-direction:column; gap:4px; margin-bottom:16px; }
+.playbook-heading strong { font-size:13px; } .playbook-heading span { color:var(--muted-foreground); font-size:11px; }
+.playbook-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+.playbook-toolbar select, .playbook-toolbar input { font-size:12px; }
+.playbook-label { display:block; font-size:11px; font-weight:600; margin:16px 0 7px; }
+.playbook-panel textarea { resize:vertical; min-height:106px; line-height:1.7; font-size:12px; }
+.playbook-columns { display:grid; grid-template-columns:1fr; gap:0; }
+.repeat-list { display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+.repeat-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; align-items:start; }
+.repeat-row input { font-size:11px; padding:8px; }
+#objections-list .repeat-row { grid-template-columns:minmax(0,1fr); border-left:2px solid var(--border); padding-left:10px; }
+#objections-list .repeat-row .small-btn { justify-self:end; }
+.small-btn { padding:7px 9px; font-size:11px; border:1px solid var(--border); background:var(--surface); color:var(--foreground); border-radius:4px; }
+.small-btn:hover { background:var(--muted); }
+.small-btn.primary { background:var(--primary); color:var(--primary-foreground); border-color:var(--primary); }
+.playbook-footer { display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+.playbook-footer > button:nth-child(2) { color:var(--destructive); }
+.save-status { font-size:11px; color:var(--success); width:100%; }
+#intro-btn, #employee-intro-btn { display:flex; align-items:center; justify-content:center; gap:7px; background:var(--surface); border:1px solid var(--border); color:var(--foreground); border-radius:5px; padding:10px; font-size:12px; }
+#intro-btn:hover, #employee-intro-btn:hover { background:var(--muted); }
+#intro-status, #employee-intro-status { color:var(--muted-foreground) !important; font-size:11px !important; }
+.employee-banner { margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--border); }
+.employee-banner > strong { font-size:13px; } .employee-banner p { font-size:12px; color:var(--muted-foreground); margin-top:8px; }
+.readonly-summary { white-space:pre-wrap; margin-top:16px; font-size:11px; line-height:1.8; overflow-wrap:anywhere; color:var(--muted-foreground); }
+.readonly-summary strong { color:var(--foreground); }
+.live-column { min-width:0; padding:30px 32px; }
+.live-heading { display:flex; align-items:center; gap:12px; padding-bottom:27px; }
+.live-heading h2 { font:400 32px/1.2 var(--font-display); }
+.live-heading .live-label { display:inline-flex; gap:6px; align-items:center; color:var(--muted-foreground); font-size:11px; margin-left:auto; }
+#intro-box { background:var(--surface) !important; border:1px solid var(--border) !important; border-left:3px solid var(--accent-foreground) !important; border-radius:5px !important; padding:18px !important; margin-bottom:24px !important; }
+#intro-box > div:first-child { color:var(--accent-foreground) !important; letter-spacing:0 !important; font-size:11px !important; }
+#intro-text { color:var(--foreground) !important; font-size:14px !important; }
+.grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
+.panel { display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:6px; min-width:0; min-height:570px; height:calc(100vh - 218px); max-height:920px; overflow:hidden; }
+.panel-header { min-height:64px; display:flex; align-items:center; gap:8px; padding:15px 16px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.panel-header h3 { font-size:13px; font-weight:600; margin-right:auto; }
+.panel-header .panel-icon { color:var(--muted-foreground); }
+.mic-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid var(--border); background:var(--surface); color:var(--foreground); border-radius:5px; padding:8px 9px; font-size:11px; white-space:nowrap; }
+.mic-btn:hover { background:var(--muted); }
+.mic-btn.listening { color:var(--destructive); border-color:var(--destructive); background:var(--destructive-soft); }
+.dot { display:inline-block; width:6px; height:6px; border-radius:50%; flex:none; }
+.dot-green { background:var(--success); } .dot-pulse { animation:pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+.transcript-area, .suggestion-area { flex:1; display:flex; flex-direction:column; gap:18px; padding:20px; overflow-y:auto; min-height:0; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.empty-state { margin:auto; text-align:center; font-size:12px; line-height:1.8; color:var(--muted-foreground); }
+.empty-state::before { content:''; display:block; width:38px; height:38px; margin:0 auto 18px; background:var(--muted); border:1px solid var(--border); border-radius:8px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23757575' stroke-width='1.3'%3E%3Cpath d='M8 9h8M8 13h5M5 4h14v13H9l-4 3z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; }
+.empty-state strong { font-weight:500; color:var(--foreground); }
+.msg-label { font-size:10px; color:var(--muted-foreground); margin-bottom:7px; font-variant-numeric:tabular-nums; }
+.msg { background:var(--muted); padding:12px 14px; border-radius:5px; font-size:14px; line-height:1.7; overflow-wrap:anywhere; }
+.interim-text { padding:12px 14px; font-size:13px; color:var(--muted-foreground); border-left:2px solid var(--border); }
+.stream-card { padding:18px; border-radius:5px; background:var(--accent) !important; color:var(--accent-foreground) !important; border:1px solid var(--border) !important; border-left:3px solid var(--accent-foreground) !important; white-space:pre-wrap; font-size:18px; line-height:1.7; overflow-wrap:anywhere; }
+.stream-label { font-size:11px; font-weight:600; margin-bottom:12px; }
+.cursor { display:inline-block; width:2px; height:16px; background:var(--accent-foreground); margin-left:3px; animation:pulse .8s infinite; }
+.seller-line-card { background:var(--accent); color:var(--accent-foreground); padding:16px; border:1px solid var(--border); border-radius:5px; cursor:pointer; }
+.seller-line-label, .msg-label { color:var(--muted-foreground); }
+.error-card { background:var(--destructive-soft); color:var(--destructive); padding:14px; border:1px solid var(--border); border-radius:5px; overflow-wrap:anywhere; }
+#analyze-btn { display:flex; align-items:center; justify-content:center; gap:10px; border:0; border-top:1px solid var(--border); background:var(--muted); color:var(--foreground); min-height:52px; font-size:12px; font-weight:600; padding:12px; flex-wrap:wrap; }
+#analyze-btn.ready { background:var(--primary); color:var(--primary-foreground); } #analyze-btn.ready:hover { background:var(--muted-foreground); }
+.kbd { font-size:9px; font-weight:400; border:1px solid currentColor; border-radius:3px; padding:2px 5px; opacity:.65; }
+.status-bar { border-top:1px solid var(--border); padding:11px 14px; font-size:10px; color:var(--muted-foreground); min-height:38px; }
+.badge { display:inline-block; padding:2px 6px; font-size:9px; border-radius:3px; font-weight:600; }
+.badge-live { background:var(--destructive-soft); color:var(--destructive); }
+.badge-thinking { background:var(--warning-soft); color:var(--warning); }
+@media (min-width:1600px) { .workspace { grid-template-columns:380px minmax(0,1fr); } .settings-column { padding:30px; } .live-column { padding:30px 40px; } }
+@media (max-width:1100px) { .workspace { grid-template-columns:300px minmax(0,1fr); } .settings-column { padding:24px 18px; } .live-column { padding:24px; } .grid { grid-template-columns:1fr; } .panel { height:480px; min-height:440px; } }
+@media (max-width:700px) { .app-topbar { padding:16px 20px; gap:8px; flex-wrap:wrap; } .app-topbar h1 { flex:1; min-width:75%; } .role-badge { order:4; } .workspace { display:flex; flex-direction:column; } .settings-column { max-height:none; overflow:visible; border-right:0; border-bottom:1px solid var(--border); padding:24px 20px; } .live-column { padding:26px 20px; } .live-heading h2 { font-size:28px; } .grid { gap:20px; } .panel { min-height:430px; height:480px; } .login-topbar, .login-footer { padding:20px; } .login-card { margin:44px auto; } }
+@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+
+
+/* Focused call workspace */
+.app-topbar { padding:18px 32px; }
+.app-topbar .logout-btn { min-height:38px; }
+.workspace { display:block; max-width:1240px; padding:0 40px 36px; min-height:0; }
+.page-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; padding:38px 0 28px; }
+.page-heading h2 { font:400 38px/1.15 var(--font-display); margin-top:8px; }
+.eyebrow { font-size:11px; color:var(--muted-foreground); }
+.department-line { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted-foreground); }
+.department-line strong { color:var(--foreground); font-weight:500; }
+.status-pill { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:7px 11px; font-size:12px; white-space:nowrap; }
+.phase-pill { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:7px 11px; color:var(--muted-foreground); font-size:12px; white-space:nowrap; }
+.status-pill .dot { background:var(--muted-foreground); }
+.status-pill.listening .dot { background:var(--success); animation:pulse 1.2s infinite; }
+.status-pill.error { color:var(--destructive); }
+.status-pill.error .dot { background:var(--destructive); }
+.context-strip { border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:18px 0; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:end; }
+.context-strip input { background:var(--surface); max-width:560px; height:42px; }
+.context-strip .config-row { gap:6px; }
+.context-strip button { min-height:42px; }
+.action-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border:1px solid var(--primary); border-radius:5px; background:var(--primary); color:var(--primary-foreground); min-height:46px; font-weight:500; font-size:13px; }
+.action-primary:hover { background:var(--muted-foreground); }
+.call-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.call-actions .logout-btn { min-height:42px; }
+#end-call-btn { color:var(--destructive); }
+.notice { padding:12px 0; color:var(--destructive); font-size:12px; }
+.notice:empty { display:none; }
+#intro-box { display:block; background:transparent !important; border:0 !important; border-bottom:1px solid var(--border) !important; border-radius:0 !important; padding:25px 0 !important; margin:0 0 24px !important; }
+.intro-heading { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.intro-heading h3 { font-size:12px; font-weight:600; margin-right:auto; }
+#intro-text { max-width:900px; line-height:1.8; white-space:pre-wrap; }
+.intro-heading button { padding:6px 9px; }
+.grid { grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:20px; margin-top:24px; }
+.panel { min-height:340px; height:400px; max-height:none; }
+.panel-header { min-height:59px; }
+.panel-header h3 { font-weight:500; }
+.suggestion-area { padding:24px; }
+.stream-card { border:0 !important; background:transparent !important; border-left:0 !important; color:var(--foreground) !important; padding:0; font:400 28px/1.5 var(--font-display); white-space:normal; }
+.suggestion-content { overflow-wrap:anywhere; }
+.suggestion-footer { border-top:1px solid var(--border); padding-top:18px; margin-top:24px; display:flex; align-items:center; }
+.used-control { display:flex; gap:7px; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:4px; color:var(--muted-foreground); background:var(--surface); font:12px var(--font-body); }
+.used-control[aria-pressed=true] { background:var(--success-soft); color:var(--success); border-color:var(--success); }
+#analyze-btn { background:var(--primary); color:var(--primary-foreground); border:0; border-radius:0; min-height:55px; font-size:13px; }
+#analyze-btn:disabled { background:var(--muted); color:var(--muted-foreground); opacity:1; }
+#analyze-btn:disabled.ready { background:var(--muted); color:var(--muted-foreground); }
+.transcript-panel .panel-header { background:var(--background); }
+.msg { font-size:13px; background:var(--muted); }
+.panel-footnote { padding:12px 20px; border-top:1px solid var(--border); color:var(--muted-foreground); font-size:11px; }
+.dialog { width:min(800px, calc(100% - 32px)); max-height:calc(100dvh - 48px); border:1px solid var(--border); border-radius:8px; padding:0; background:var(--surface); color:var(--foreground); margin:auto; }
+.dialog::backdrop { background:oklch(.19 0 0 / .35); }
+.dialog-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 28px; border-bottom:1px solid var(--border); }
+.dialog-header h2 { font:400 26px var(--font-display); }
+.dialog-close { display:grid; place-items:center; width:34px; height:34px; padding:0; font-size:20px; }
+.dialog-body { padding:4px 28px 28px; }
+.settings-section { padding:24px 0; border-bottom:1px solid var(--border); }
+.settings-section:last-child { border:0; padding-bottom:0; }
+.settings-section h3 { font-size:14px; margin-bottom:16px; }
+.settings-section .config-row { margin-bottom:16px; }
+.playbook-panel { border:0; padding:0; }
+.playbook-columns { grid-template-columns:1fr 1fr; gap:20px; }
+.playbook-toolbar { display:grid; grid-template-columns:1fr 1fr auto; }
+.repeat-row { grid-template-columns:minmax(0,1fr) auto; }
+.playbook-footer { position:sticky; bottom:0; background:var(--surface); padding-bottom:8px; }
+#playbook-status { min-height:18px; }
+#playbook-status.dirty { color:var(--warning); }
+.material-help { margin-top:20px; color:var(--muted-foreground); font-size:12px; }
+.material-help summary { cursor:pointer; color:var(--foreground); margin-bottom:12px; }
+.confirm-dialog { width:min(420px, calc(100% - 32px)); padding:26px; }
+.confirm-dialog h2 { font:400 25px var(--font-display); margin-bottom:12px; }
+.confirm-dialog p { color:var(--muted-foreground); font-size:13px; line-height:1.7; }
+.confirm-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
+#readonly-summary { font-size:13px; }
+[hidden] { display:none !important; }
+@media (max-width:800px) { .workspace { padding:0 24px 28px; } .grid { grid-template-columns:1fr; } .panel { height:410px; min-height:360px; } .page-heading h2 { font-size:32px; } .context-strip { grid-template-columns:1fr; } .call-actions { justify-content:flex-start; } .page-heading { align-items:start; } .playbook-toolbar, .playbook-columns { grid-template-columns:1fr; } }
+@media (max-width:500px) { .workspace { padding:0 18px 24px; } .app-topbar { padding:15px 18px; } .role-badge { display:none; } .brand { font-size:17px; } .page-heading { flex-wrap:wrap; padding:26px 0 22px; } .page-heading h2 { font-size:30px; } .stream-card { font-size:24px; } .dialog-header, .dialog-body { padding-left:20px; padding-right:20px; } .context-strip .action-primary { flex:1; } .panel { height:410px; } }
+</style></head><body><section class="login-shell" id="login-view">
+<header class="login-topbar"><span class="brand"><span class="brand-mark"><svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M4 14l4-8 4 12 4-12 4 8"></path></svg></span><span>AI Säljassistent</span></span></header>
+<div aria-hidden="true" class="figure-scene"><span></span><i></i></div>
+<form class="login-card" onsubmit="login(event)">
+<div class="login-symbol"><svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><rect height="12" rx="3" width="6" x="9" y="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-3 0h6"></path></svg></div><h1>AI Säljassistent</h1>
+<p>Logga in som företagsadministratör eller anställd.</p>
+<div class="login-field">
+<label for="login-username">E-post</label>
+<input autocomplete="username" id="login-username" required="" type="email"/>
+</div>
+<div class="login-field">
+<label for="login-password">Lösenord</label>
+<input autocomplete="current-password" id="login-password" required="" type="password"/>
+</div>
+<button class="login-btn" type="submit">Logga in <svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M5 12h14m-5-5 5 5-5 5"></path></svg></button>
+<div class="login-error" id="login-error"></div>
+<div class="demo-accounts">Logga in med det konto som administratören har skapat åt dig.</div>
+</form>
+<footer class="login-footer">AI Säljassistent · Live</footer>
+</section>
+<section class="invite-setup-shell hidden" id="invite-view">
+<header class="login-topbar"><span class="brand"><span class="brand-mark"><svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M4 14l4-8 4 12 4-12 4 8"></path></svg></span><span>AI Säljassistent</span></span></header>
+<form class="login-card" onsubmit="finishInvitation(event)">
+<h1>Välkommen</h1>
+<p>Välj ett lösenord för att aktivera din företagsinbjudan.</p>
+<div class="login-field"><label for="invite-password">Nytt lösenord</label><input id="invite-password" autocomplete="new-password" minlength="12" required type="password"/></div>
+<div class="login-field"><label for="invite-password-confirm">Upprepa lösenord</label><input id="invite-password-confirm" autocomplete="new-password" minlength="12" required type="password"/></div>
+<button class="login-btn" type="submit">Aktivera konto</button>
+<div class="login-error" id="invite-error" role="alert"></div>
+</form>
+<footer class="login-footer">AI Säljassistent · Live</footer>
+</section>
+<main id="app-view" class="hidden">
+<header class="app-topbar"><h1><span class="brand"><span class="brand-mark"><svg aria-hidden="true" class="icon" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="M4 14l4-8 4 12 4-12 4 8"></path></svg></span><span>AI Säljassistent</span></span></h1><span class="role-badge" id="role-badge"></span><button class="logout-btn hidden" id="settings-btn" onclick="openSettings()">⚙ Inställningar</button><button class="logout-btn" onclick="logout()">Logga ut</button></header>
+<div class="workspace">
+<div class="page-heading"><div><div class="department-line"><span>Avdelning</span><strong id="active-department"></strong><button class="small-btn" onclick="openInstructions()" title="Avdelningens instruktioner" aria-label="Avdelningens instruktioner">ⓘ</button></div><h2 id="call-heading">Ditt nästa samtal</h2></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="phase-pill" id="sales-phase-badge">Fas 1 · Inledning</span><div class="status-pill" id="call-status" role="status"><span class="dot" id="mic-dot"></span><span id="call-status-text">Redo att börja</span></div></div></div>
+<div class="context-strip"><div><div class="config-row hidden" id="admin-context">
+<label for="customer-type">Kundens situation</label>
+<input id="customer-type" placeholder="Till exempel familj som vill flytta till större" type="text" value="en granne till en kund vars bostad vi nyligen sålt i området"/>
+</div><div id="employee-config" class="hidden"><div class="config-row">
+<label for="employee-customer-type">Kundens situation</label>
+<input id="employee-customer-type" placeholder="Beskriv kunden du pratar med" type="text"/>
+</div></div></div><div class="call-actions"><button class="action-primary" id="start-call-btn" onclick="startListening()">Starta samtal <span aria-hidden="true">→</span></button><button class="logout-btn hidden" id="mic-btn" onclick="toggleListening()"><span id="mic-label">Stoppa lyssning</span></button><button class="logout-btn hidden" id="end-call-btn" onclick="finishConversation()">Avsluta samtal</button><button class="logout-btn hidden" id="copy-transcript-btn" onclick="copyTranscript()">Kopiera samtalstext</button><button class="action-primary hidden" id="new-call-btn" onclick="startNewConversation()">Nytt samtal <span aria-hidden="true">→</span></button><button class="logout-btn hidden" id="intro-btn" onclick="toggleIntro()">Samtalsinledning</button></div></div>
+<div class="notice" id="call-error" role="alert"></div>
+<div id="intro-box"><div class="intro-heading"><h3>Samtalsinledning</h3><button class="small-btn" onclick="copyIntro()" id="copy-btn">Kopiera inledning</button></div><div id="intro-text"></div></div>
+<div class="grid">
+<section class="panel suggestion-panel"><div class="panel-header"><h3>Nästa steg i samtalet</h3><span class="eyebrow">AI-coach</span></div><div class="suggestion-area" id="suggestion-area" aria-live="polite"><div class="empty-state">Inget förslag ännu</div></div><button id="analyze-btn" onclick="triggerAnalysis()" disabled><span>Ge mig ett förslag</span><span class="kbd" aria-hidden="true">␣</span></button></section>
+<section class="panel transcript-panel"><div class="panel-header"><h3>Samtalstext</h3></div><div class="transcript-area" id="transcript-area" aria-live="polite"><div class="empty-state">Samtalet har inte börjat</div></div><div class="status-bar" id="status-bar" role="status">Redo att börja</div></section>
+</div></div>
+<dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-header"><h2 id="settings-title">Inställningar</h2><button class="small-btn dialog-close" onclick="closeSettings()" aria-label="Stäng inställningar">×</button></div><div class="dialog-body"><div id="admin-config" class="hidden"><section class="settings-section"><h3>01 · Anslutning</h3><p class="hint" id="connection-status">AI-nycklar hanteras säkert av servern.</p></section><section class="settings-section"><h3>02 · Avdelning</h3><div class="playbook-panel">
+
+<div class="playbook-toolbar">
+<select aria-label="Välj avdelning" id="department-profile" onchange="requestProfileChange(this.value)"></select>
+<input id="new-profile-name" placeholder="Ny avdelning, t.ex. Försäkring" type="text"/>
+<button class="small-btn" onclick="createPlaybookProfile()">+ Ny avdelning</button>
+</div>
+<label class="playbook-label" for="always-script">Permanent script och regler</label>
+<textarea id="always-script" placeholder="Exempel: Presentera alltid företaget först. Lova aldrig något som inte står i avtalet."></textarea>
+<label class="playbook-label" for="fixed-intro">Obligatorisk samtalsinledning</label>
+<textarea id="fixed-intro" placeholder="Skriv exakt vad säljaren ska säga. AI:n får aldrig skriva om eller ersätta denna text."></textarea>
+<div class="playbook-columns">
+<div>
+<label class="playbook-label">Enstaka säljtips</label>
+<div class="repeat-list" id="tips-list"></div>
+<button class="small-btn" onclick="addPlaybookRow('tip')">+ Lägg till säljtips</button>
+</div>
+<div>
+<label class="playbook-label">Invändningshantering</label>
+<div class="repeat-list" id="objections-list"></div>
+<button class="small-btn" onclick="addPlaybookRow('objection')">+ Lägg till invändning</button>
+</div>
+</div>
+<div class="playbook-footer">
+<button class="small-btn primary" onclick="saveActivePlaybook()">Spara ändringar</button>
+<button class="small-btn" onclick="deleteActivePlaybook()">Ta bort avdelning</button>
+<span class="save-status" id="playbook-status"></span>
+</div>
+</div></section><section class="settings-section"><h3>03 · Säljmaterial</h3><div class="config-row">
+<label for="product-input">Produkt</label>
+<input id="product-input" type="text" value="Fastighetsmäklare bostadsvärdering "/>
+</div><div class="config-row">
+<label>Säljmaterial</label>
+<div class="pdf-upload-area">
+<label class="pdf-btn" for="pdf-file">Ladda upp PDF eller text</label>
+<input accept=".pdf,.txt" id="pdf-file" onchange="loadPDF(this)" style="display:none" type="file"/>
+<span id="pdf-status">Ingen PDF uppladdad – använder inbyggda tekniker</span>
+</div>
+<div class="hint">Valfritt: lägg till företagets egna PDF- eller textdokument. Grundmanuset från Invändningar.xlsx ingår redan i appen.</div>
+<div id="document-list" class="repeat-list" aria-live="polite"></div>
+</div><details class="material-help"><summary>Hjälp för säljmaterial</summary><div class="pdf-guide">
+<strong>Så skriver du PDF:en för bäst AI-svar</strong>
+<ul>
+<li><strong>Produkten:</strong> vad ni säljer, för vem och vilket problem den löser.</li>
+<li><strong>Värde:</strong> konkreta fördelar, bevis, kundresultat och vad som skiljer er från konkurrenter.</li>
+<li><strong>Processen:</strong> rätt ordning från inledning och frågor till rekommendation och avslut.</li>
+<li><strong>Invändningar:</strong> kundens exakta formulering, ett godkänt svar och nästa följdfråga.</li>
+<li><strong>Gränser:</strong> vad säljaren aldrig får lova, säga eller hitta på.</li>
+<li><strong>Exempel:</strong> skriv gärna 3–5 bra dialoger från riktiga kundsituationer.</li>
+</ul>
+<div class="pdf-example"><strong>Bra rubriker:</strong> Produkt och målgrupp · Säljprocess · Vanliga invändningar · Godkända formuleringar · Förbjudna påståenden · Kundexempel</div>
+<div><strong>Tips:</strong> En tydlig text-PDF med rubriker är bättre än en grafisk broschyr med lite text. Lägg den fasta inledningen i fältet ovan, inte bara i PDF:en.</div>
+</div></details></section><section class="settings-section"><h3>04 · Team</h3><div class="config-row"><label for="invite-email">Bjud in anställd</label><input id="invite-email" autocomplete="email" placeholder="namn@foretag.se" type="email"/><button class="small-btn primary" id="invite-employee-btn" onclick="inviteEmployee()">Skicka inbjudan</button><div class="save-status" id="invite-status" role="status"></div></div></section></div></div></dialog>
+<dialog class="dialog" id="instructions-dialog" aria-labelledby="instructions-title"><div class="dialog-header"><h2 id="instructions-title">Avdelningens instruktioner</h2><button class="small-btn dialog-close" onclick="document.getElementById('instructions-dialog').close()" aria-label="Stäng instruktioner">×</button></div><div class="dialog-body"><div id="employee-banner"><div class="readonly-summary" id="readonly-summary"></div></div></div></dialog>
+<dialog class="dialog confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="confirm-actions"><button class="logout-btn" onclick="resolveConfirmation(false)">Avbryt</button><button class="action-primary" id="confirm-accept" onclick="resolveConfirmation(true)">Fortsätt</button></div></dialog>
+<span id="intro-status" hidden></span><span id="employee-intro-status" hidden></span><button id="employee-intro-btn" hidden onclick="showFixedIntro()"></button>
+</main>
+<script src="./supabase-config.js"></script>
+<script src="./Playbook.js"></script>
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let recognition = null;
+let isListening = false;
+let isStreaming = false;
+let interimEl = null;
+let pendingText = '';
+let conversationHistory = [];
+let playbookProfiles = {};
+let currentRole = '';
+let accessToken = '';
+let organizationName = '';
+let invitationToken = '';
+let callPhase = 'ready';
+let salesPhase = 'opening';
+let activeProfileName = '';
+let savedEditor = '';
+let loadingProfile = false;
+let confirmationAction = null;
+
+async function login(event) {
+  event.preventDefault();
+  const email = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const errorElement = document.getElementById('login-error');
+  const config = window.SUPABASE_CONFIG || {};
+  if (!config.url || config.url.includes('YOUR_PROJECT_ID') || !config.anonKey || config.anonKey.includes('YOUR_SUPABASE')) {
+    errorElement.textContent = 'Supabase är inte konfigurerat ännu. Följ installationsguiden.';
+    return;
+  }
+  const submitButton = event.submitter;
+  if (submitButton) submitButton.disabled = true;
+  errorElement.textContent = '';
+  try {
+    const response = await fetch(`${config.url.replace(/\/$/, '')}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const session = await response.json();
+    if (!response.ok) throw new Error(session.msg || session.message || session.error_description || 'Fel e-post eller lösenord.');
+
+    await activateSession(session.access_token);
+    return;
+    const profileResponse = await fetch(`${config.url.replace(/\/$/, '')}/rest/v1/user_profiles?id=eq.${encodeURIComponent(session.user.id)}&select=role`, {
+      headers: { apikey: config.anonKey, Authorization: `Bearer ${accessToken}` },
+    });
+    const profiles = await profileResponse.json();
+    if (!profileResponse.ok || !profiles[0]) throw new Error('Användarprofil saknas. Kontakta administratören.');
+
+    currentRole = profiles[0].role;
+    document.getElementById('login-view').classList.add('hidden');
+    document.getElementById('app-view').classList.remove('hidden');
+    document.getElementById('role-badge').textContent = currentRole === 'admin' ? 'Admin / försäljningschef' : 'Anställd';
+    document.getElementById('admin-config').classList.toggle('hidden', currentRole !== 'admin');
+    document.getElementById('employee-config').classList.toggle('hidden', currentRole !== 'employee');
+    document.getElementById('employee-banner').classList.toggle('hidden', currentRole !== 'employee');
+    document.getElementById('settings-btn').classList.toggle('hidden', currentRole !== 'admin');
+    document.getElementById('admin-context').classList.toggle('hidden', currentRole !== 'admin');
+    document.getElementById('connection-status').textContent = 'Inloggad. AI- och embeddingsnycklar hanteras på servern.';
+    renderReadonlySummary();
+    syncCallUI();
+    showFixedIntro();
+    if (currentRole === 'admin') refreshRagDocuments();
+  } catch (error) {
+    accessToken = '';
+    errorElement.textContent = error.message || 'Inloggningen misslyckades.';
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
+}
+
+async function activateSession(token) {
+  accessToken = token;
+  const context = await coachRequest({ action: 'get_context' });
+  currentRole = context.role;
+  organizationName = context.organizationName;
+  loadOrganizationSettings(context.settings);
+  document.getElementById('login-view').classList.add('hidden');
+  document.getElementById('invite-view').classList.add('hidden');
+  document.getElementById('app-view').classList.remove('hidden');
+  document.getElementById('role-badge').textContent = `${organizationName} · ${currentRole === 'admin' ? 'Företagsadmin' : 'Anställd'}`;
+  document.getElementById('admin-config').classList.toggle('hidden', currentRole !== 'admin');
+  document.getElementById('employee-config').classList.toggle('hidden', currentRole !== 'employee');
+  document.getElementById('employee-banner').classList.toggle('hidden', currentRole !== 'employee');
+  document.getElementById('settings-btn').classList.toggle('hidden', currentRole !== 'admin');
+  document.getElementById('admin-context').classList.toggle('hidden', currentRole !== 'admin');
+  document.getElementById('connection-status').textContent = 'Inloggad. AI- och embeddingsnycklar hanteras på servern.';
+  renderReadonlySummary();
+  syncCallUI();
+  showFixedIntro();
+  if (currentRole === 'admin') refreshRagDocuments();
+}
+
+function initializeInvitation() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  if (params.get('type') !== 'invite') return;
+  invitationToken = params.get('access_token') || '';
+  document.getElementById('login-view').classList.add('hidden');
+  document.getElementById('invite-view').classList.remove('hidden');
+  window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  if (!invitationToken) document.getElementById('invite-error').textContent = 'Inbjudningslänken saknar en giltig token. Be administratören skicka en ny inbjudan.';
+}
+
+async function finishInvitation(event) {
+  event.preventDefault();
+  const errorElement = document.getElementById('invite-error');
+  const password = document.getElementById('invite-password').value;
+  if (password !== document.getElementById('invite-password-confirm').value) {
+    errorElement.textContent = 'Lösenorden är inte lika.';
+    return;
+  }
+  if (!invitationToken) {
+    errorElement.textContent = 'Inbjudningslänken är ogiltig eller har gått ut. Be administratören skicka en ny.';
+    return;
+  }
+  const button = event.submitter;
+  if (button) button.disabled = true;
+  errorElement.textContent = '';
+  const config = window.SUPABASE_CONFIG || {};
+  try {
+    const response = await fetch(`${config.url.replace(/\/$/, '')}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${invitationToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.msg || result.message || 'Lösenordet kunde inte sparas.');
+    await activateSession(invitationToken);
+    invitationToken = '';
+  } catch (error) {
+    errorElement.textContent = error.message || 'Kontot kunde inte aktiveras.';
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function logout() {
+  if (isStreaming) { showCallError('Vänta tills förslaget är klart innan du loggar ut.'); return; }
+  if (editorDirty()) { askConfirmation('Osparade ändringar', 'Logga ut utan att spara avdelningens ändringar?', 'Logga ut', () => { discardEditor(); logout(); }); return; }
+  if (hasConversation()) { askConfirmation('Logga ut?', 'Samtalet rensas när du loggar ut. Kopiera samtalstexten först om du vill behålla den.', 'Logga ut', () => completeLogout()); return; }
+  completeLogout();
+}
+async function completeLogout() {
+  const token = accessToken;
+  accessToken = '';
+  organizationName = '';
+  const config = window.SUPABASE_CONFIG || {};
+  if (token && config.url && config.anonKey) {
+    try {
+      await fetch(`${config.url.replace(/\/$/, '')}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
+      });
+    } catch {}
+  }
+  resetConversation();
+  document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
+  currentRole = '';
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('login-view').classList.remove('hidden');
+  document.getElementById('invite-view').classList.add('hidden');
+  document.getElementById('login-password').value = '';
+}
+
+function startNewConversation() {
+  if (isStreaming) { showCallError('Vänta tills förslaget är klart.'); return; }
+  if (hasConversation()) { askConfirmation('Börja ett nytt samtal?', 'Det nuvarande samtalet rensas. Kopiera samtalstexten först om du vill behålla den.', 'Nytt samtal', resetConversation); return; }
+  resetConversation();
+}
+function resetConversation() {
+  stopListening();
+  pendingText = '';
+  conversationHistory = [];
+  interimEl = null;
+  callPhase = 'ready';
+  salesPhase = 'opening';
+  updateSalesPhaseBadge();
+  document.getElementById('transcript-area').innerHTML = '<div class="empty-state">Samtalet har inte börjat</div>';
+  document.getElementById('suggestion-area').innerHTML = '<div class="empty-state">Inget förslag ännu</div>';
+  document.getElementById(currentRole === 'employee' ? 'employee-customer-type' : 'customer-type').value = '';
+  showCallError('');
+  syncCallUI();
+  showFixedIntro();
+  setStatus('Redo att börja');
+}
+
+function hasSession() {
+  return Boolean(accessToken);
+}
+
+async function coachRequest(payload) {
+  const config = window.SUPABASE_CONFIG || {};
+  if (!config.url || !config.anonKey || !accessToken) throw new Error('Du är inte inloggad mot Supabase.');
+  const response = await fetch(`${config.url.replace(/\/$/, '')}/functions/v1/coach`, {
+    method: 'POST',
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || `Serverfel (${response.status}).`);
+  return result;
+}
+
+function getCustomerType() {
+  const inputId = currentRole === 'employee' ? 'employee-customer-type' : 'customer-type';
+  return document.getElementById(inputId).value.trim();
+}
+
+function renderReadonlySummary() {
+  const name = document.getElementById('department-profile').value;
+  const profile = playbookProfiles[name] || {};
+  const tips = (profile.tips || []).filter(Boolean).map(tip => '- ' + tip).join('\n') || 'Inga extra säljtips.';
+  const objections = (profile.objections || []).filter(item => item.objection || item.response)
+    .map(item => `- ${item.objection}: ${item.response}`).join('\n') || 'Inga sparade invändningssvar.';
+  document.getElementById('readonly-summary').innerHTML = `<strong>Aktiv avdelning:</strong> ${escapeHtml(name)}\n<strong>Fast inledning:</strong> ${escapeHtml(profile.intro || 'Ingen fast inledning sparad.')}\n<strong>Permanent script:</strong> ${escapeHtml(profile.script || 'Inga extra regler angivna.')}\n<strong>Säljtips:</strong> ${escapeHtml(tips)}\n<strong>Invändningshantering:</strong> ${escapeHtml(objections)}`;
+}
+
+function escapeHtml(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+}
+
+function getDefaultPlaybooks() {
+  return {
+    'Fastighetsförsäljning': {
+      script: 'Var rådgivande och nyfiken. Ställ frågor om kundens situation innan du föreslår nästa steg. Lova aldrig ett resultat som inte kan styrkas.',
+      intro: 'Hej, jag heter XXX och ringer från fastighetsbyrån. Anledningen till att jag ringer är att vi nyligen har sålt din grannes bostad och därför passar på att kolla med dig när vi är i området. Nästa gång du flyttar, kommer du vilja flytta större eller mindre då?',
+      tips: ['Knyt alltid rekommendationen till något kunden själv har berättat.', 'Avsluta med en enkel nästa-steg-fråga.'],
+      objections: [{ objection: 'Jag vill bara fundera.', response: 'Jag förstår. Vad är det viktigaste du vill känna dig trygg med innan du bestämmer dig?' }]
+    }
+  };
+}
+
+function initPlaybook() {
+  playbookProfiles = getDefaultPlaybooks();
+  if (!Object.keys(playbookProfiles).length) playbookProfiles = getDefaultPlaybooks();
+  const defaultIntro = getDefaultPlaybooks()['Fastighetsförsäljning'].intro;
+  Object.keys(playbookProfiles).forEach(name => {
+    if (name === 'Fastighetsförsäljning' && !playbookProfiles[name].intro) playbookProfiles[name].intro = defaultIntro;
+  });
+  const select = document.getElementById('department-profile');
+  Object.keys(playbookProfiles).forEach(name => select.add(new Option(name, name)));
+  loadPlaybookProfile(select.value);
+}
+
+function loadOrganizationSettings(settings) {
+  const savedPlaybooks = settings && settings.playbooks;
+  playbookProfiles = savedPlaybooks && typeof savedPlaybooks === 'object' && !Array.isArray(savedPlaybooks) && Object.keys(savedPlaybooks).length
+    ? savedPlaybooks
+    : getDefaultPlaybooks();
+  const defaultIntro = getDefaultPlaybooks()['Fastighetsförsäljning'].intro;
+  Object.keys(playbookProfiles).forEach(name => {
+    if (name === 'Fastighetsförsäljning' && !playbookProfiles[name].intro) playbookProfiles[name].intro = defaultIntro;
+  });
+  const select = document.getElementById('department-profile');
+  select.innerHTML = '';
+  Object.keys(playbookProfiles).forEach(name => select.add(new Option(name, name)));
+  document.getElementById('product-input').value = settings && settings.product_name || 'Fastighetsmäklare bostadsvärdering';
+  loadPlaybookProfile(select.value);
+}
+
+function loadPlaybookProfile(name) {
+  const profile = playbookProfiles[name];
+  if (!profile) return;
+  loadingProfile = true;
+  activeProfileName = name;
+  document.getElementById('department-profile').value = name;
+  document.getElementById('always-script').value = profile.script || '';
+  document.getElementById('fixed-intro').value = profile.intro || '';
+  renderPlaybookRows('tips-list', profile.tips || [], 'tip');
+  renderPlaybookRows('objections-list', profile.objections || [], 'objection');
+  document.getElementById('playbook-status').textContent = '';
+  loadingProfile = false;
+  savedEditor = editorSnapshot();
+  refreshDepartment();
+}
+
+function renderPlaybookRows(id, values, type) {
+  const list = document.getElementById(id);
+  list.innerHTML = '';
+  values.forEach(value => addPlaybookRow(type, value));
+}
+
+function addPlaybookRow(type, value = type === 'tip' ? '' : { objection: '', response: '' }) {
+  const list = document.getElementById(type === 'tip' ? 'tips-list' : 'objections-list');
+  const row = document.createElement('div');
+  row.className = 'repeat-row';
+  if (type === 'tip') {
+    row.innerHTML = `<input type="text" value="${escapeAttribute(value)}" placeholder="T.ex. Ställ en öppen följdfråga">`;
+  } else {
+    row.innerHTML = `<input type="text" value="${escapeAttribute(value.objection || '')}" placeholder="Kundens invändning"><input type="text" value="${escapeAttribute(value.response || '')}" placeholder="Rekommenderat svar">`;
+  }
+  const remove = document.createElement('button');
+  remove.className = 'small-btn';
+  remove.textContent = 'Ta bort';
+  remove.onclick = () => { row.remove(); markEditorDirty(); };
+  row.appendChild(remove);
+  list.appendChild(row);
+  markEditorDirty();
+}
+
+function escapeAttribute(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+async function saveActivePlaybook() {
+  const name = document.getElementById('department-profile').value;
+  const tips = [...document.querySelectorAll('#tips-list input')].map(input => input.value.trim()).filter(Boolean);
+  const objections = [...document.querySelectorAll('#objections-list .repeat-row')].map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { objection: inputs[0].value.trim(), response: inputs[1].value.trim() };
+  }).filter(item => item.objection || item.response);
+  playbookProfiles[name] = { script: document.getElementById('always-script').value.trim(), intro: document.getElementById('fixed-intro').value.trim(), tips, objections };
+  try {
+    await persistOrganizationSettings();
+  } catch (error) {
+    document.getElementById('playbook-status').textContent = 'Kunde inte spara';
+    showCallError(error.message || 'Företagets inställningar kunde inte sparas.');
+    return false;
+  }
+  document.getElementById('playbook-status').textContent = 'Sparad för ' + name;
+  savedEditor = editorSnapshot();
+  document.getElementById('playbook-status').classList.remove('dirty');
+  refreshDepartment();
+  return true;
+}
+
+async function persistOrganizationSettings() {
+  await coachRequest({
+    action: 'save_settings',
+    productName: document.getElementById('product-input').value.trim(),
+    playbooks: playbookProfiles,
+  });
+}
+
+async function createPlaybookProfile() {
+  if (editorDirty()) { askConfirmation('Osparade ändringar', 'Skapa en ny avdelning utan att spara ändringarna?', 'Fortsätt', () => { discardEditor(); createPlaybookProfile(); }); return; }
+  const input = document.getElementById('new-profile-name');
+  const name = input.value.trim();
+  if (!name) return;
+  if (playbookProfiles[name]) { alert('Den avdelningen finns redan.'); return; }
+  const previousProfiles = JSON.stringify(playbookProfiles);
+  const previousName = activeProfileName;
+  playbookProfiles[name] = { script: '', intro: '', tips: [], objections: [] };
+  const select = document.getElementById('department-profile');
+  select.add(new Option(name, name));
+  select.value = name;
+  input.value = '';
+  loadPlaybookProfile(name);
+  if (!await saveActivePlaybook()) {
+    playbookProfiles = JSON.parse(previousProfiles);
+    select.innerHTML = '';
+    Object.keys(playbookProfiles).forEach(profileName => select.add(new Option(profileName, profileName)));
+    loadPlaybookProfile(previousName);
+  }
+}
+
+function deleteActivePlaybook() {
+  if (Object.keys(playbookProfiles).length <= 1) { alert('Minst en avdelning måste finnas kvar.'); return; }
+  const name = activeProfileName;
+  askConfirmation('Ta bort avdelning?', `Avdelningen ”${name}” och dess instruktioner tas bort. Detta går inte att ångra.${editorDirty() ? ' Osparade ändringar försvinner också.' : ''}`, 'Ta bort', async () => {
+    const previousProfiles = JSON.stringify(playbookProfiles);
+    const select = document.getElementById('department-profile');
+    delete playbookProfiles[name];
+    select.remove(select.selectedIndex);
+    loadPlaybookProfile(select.value);
+    try {
+      await persistOrganizationSettings();
+      document.getElementById('playbook-status').textContent = 'Sparad för ' + select.value;
+      savedEditor = editorSnapshot();
+      refreshDepartment();
+    } catch (error) {
+      playbookProfiles = JSON.parse(previousProfiles);
+      select.innerHTML = '';
+      Object.keys(playbookProfiles).forEach(profileName => select.add(new Option(profileName, profileName)));
+      loadPlaybookProfile(name);
+      showCallError(error.message || 'Avdelningen kunde inte tas bort från företagets inställningar.');
+    }
+  });
+}
+
+function getDepartmentPrompt() {
+  const name = document.getElementById('department-profile').value;
+  const profile = playbookProfiles[name] || {};
+  const tips = (profile.tips || []).filter(Boolean).map(tip => '- ' + tip).join('\n');
+  const objections = (profile.objections || []).filter(item => item.objection || item.response)
+    .map(item => `- Invändning: ${item.objection}\n  Svar: ${item.response}`).join('\n');
+  return `\n\nAKTIV AVDELNING: ${name}\n\nOBLIGATORISK FAST SAMTALSINLEDNING:\n"""${profile.intro || 'Ingen fast inledning sparad.'}"""\nDu får aldrig skriva om, förbättra, sammanfatta eller ersätta den fasta inledningen. Om säljaren behöver inledningen ska du återge den ordagrant.\n\nPERMANENT SCRIPT OCH REGLER:\n${profile.script || 'Inga extra regler angivna.'}\n${tips ? `\nSÄLJTIPS:\n${tips}` : ''}${objections ? `\n\nINVÄNDNINGSHANTERING:\n${objections}` : ''}\nFölj avdelningens regler när de passar, men hitta inte på fakta.`;
+}
+
+function getCombinedPlaybookPrompt() {
+  const filePrompt = typeof window.getPlaybookPrompt === 'function' ? window.getPlaybookPrompt() : '';
+  return `${getDepartmentPrompt()}\n\n${filePrompt}`;
+}
+
+initPlaybook();
+
+// Lyssna på mellanslag för att trigga analys
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && isListening && !isStreaming) {
+    // Undvik att trigga om användaren skriver i ett inputfält
+    if (document.activeElement.matches('input, textarea, select, button, [contenteditable=true]') || document.querySelector('dialog[open]')) return;
+    e.preventDefault();
+    triggerAnalysis();
+  }
+});
+
+function triggerAnalysis() {
+  if (!pendingText.trim() || isStreaming || callPhase !== 'active') return;
+  if (!hasSession()) { showCallError('Sessionen har gått ut. Logga in igen.'); return; }
+  const text = pendingText.trim();
+  pendingText = '';
+  analyzeStreaming(text);
+}
+
+// ─── PDF-laddning ─────────────────────────────────────────────────────────────
+async function loadPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('pdf-status');
+  if (currentRole !== 'admin') { statusEl.textContent = 'Endast administratörer kan lägga till säljmaterial.'; statusEl.className = 'error'; return; }
+  if (file.size > 10 * 1024 * 1024) { statusEl.textContent = 'Filen är större än 10 MB.'; statusEl.className = 'error'; input.value = ''; return; }
+  statusEl.textContent = 'Indexerar säljmaterial...';
+  statusEl.className = '';
+
+  try {
+    const documentPayload = { action: 'index_document', title: file.name };
+    if (file.name.toLowerCase().endsWith('.pdf')) documentPayload.pdfBase64 = await fileToBase64(file);
+    else documentPayload.text = await file.text();
+    const result = await coachRequest(documentPayload);
+    statusEl.textContent = `✓ ${file.name} indexerad (${result.chunks} textdelar)`;
+    statusEl.className = 'loaded';
+    await refreshRagDocuments();
+  } catch (err) {
+    statusEl.textContent = 'Fel vid inläsning: ' + err.message;
+    statusEl.className = 'error';
+  } finally {
+    input.value = '';
+  }
+}
+
+async function refreshRagDocuments() {
+  const list = document.getElementById('document-list');
+  if (!list || currentRole !== 'admin') return;
+  list.replaceChildren();
+  try {
+    const result = await coachRequest({ action: 'list_documents' });
+    for (const documentInfo of result.documents || []) {
+      const row = document.createElement('div');
+      row.className = 'repeat-row';
+      const title = document.createElement('span');
+      title.textContent = documentInfo.title;
+      title.style.cssText = 'font-size:11px;overflow-wrap:anywhere;align-self:center';
+      const remove = document.createElement('button');
+      remove.className = 'small-btn';
+      remove.textContent = 'Ta bort';
+      remove.onclick = () => askConfirmation('Ta bort material?', `Ta bort ${documentInfo.title} ur sökindexet?`, 'Ta bort', () => deleteRagDocument(documentInfo.id));
+      row.append(title, remove);
+      list.appendChild(row);
+    }
+    if (!list.childElementCount) list.textContent = 'Inga extra företagsdokument. Appens inbyggda grundmanus används ändå.';
+  } catch (error) {
+    list.textContent = error.message;
+  }
+}
+
+async function deleteRagDocument(id) {
+  try {
+    await coachRequest({ action: 'delete_document', id });
+    await refreshRagDocuments();
+  } catch (error) {
+    showCallError(error.message);
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── System prompt ──────────────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const product = document.getElementById('product-input').value || 'produkten';
+  const customerType = getCustomerType();
+  const customerCtx = customerType ? `\nKundtyp: ${customerType}` : '';
+  const phaseNames = {
+    opening: 'Fas 1 – Inledning',
+    mapping: 'Fas 2 – Kartläggning',
+    problem: 'Fas 3 – Behov och konsekvenser',
+    summary: 'Fas 3.5 – Sammanfattning och bekräftelse',
+    meeting: 'Fas 4 – Föreslå eller boka möte',
+    ended: 'Avslutat',
+  };
+  return `Du är en kortfattad, naturlig och respektfull realtidscoach för en bostadsmäklare. Produkt: ${product}.${customerCtx}
+
+SÄLJPROCESS:
+- Inledning: skapa relevans och fråga om kundens framtida boende.
+- Kartläggning: fråga en sak i taget om mål, område, tidplan och hur aktiv kunden är.
+- Behov och konsekvenser: utforska lugnt kundens beredskap kring köp, försäljning och värdering. Boka inte möte än.
+- Sammanfattning: sammanfatta kundens egna mål och behov kort och fråga om det stämmer. Gå inte vidare förrän kunden bekräftar.
+- Möte: först efter en tydlig bekräftelse, föreslå ett kort och förutsättningslöst möte.
+- Om kunden säger nej, ber att samtalet avslutas eller inte vill bli kontaktad: respektera det och avsluta utan övertalning.
+- Anpassa repliken tydligt till kundens senaste svar: bekräfta kort det viktigaste kunden sa och välj ett konkret nästa steg, inte en generell säljpitch.
+- Skriv en kort replik som går att säga naturligt i telefon: helst 10–22 ord och högst två meningar. Ställ högst en relevant fråga.
+- Ta bort förklaringar till säljaren, upprepningar, utfyllnad och flera alternativa frågor. Hitta inte på fakta, priser, affärer eller löften. Om du inte vet, säg att säljaren ska kontrollera.
+
+Aktuell fas från appen: ${phaseNames[salesPhase] || phaseNames.opening}.
+Använd samtalshistoriken för att välja ett lämpligt nästa steg inom denna fas. Flytta högst en fas framåt per svar. Gå bara till mötesfas efter att kunden tydligt bekräftat säljarens sammanfattning. Om kunden byter ämne, hantera det utan att tappa målet eller låtsas att tidigare steg är avklarade.
+
+${getCombinedPlaybookPrompt()}
+
+Returnera det strukturerade coachsvaret med exakt fälten response och phase. response ska vara en konkret, kundanpassad replik på naturlig svenska, helst 10–22 ord och högst två meningar. phase anger fasen för nästa coachförslag och ska vara en av opening, mapping, problem, summary, meeting eller ended. Välj aktuell fas eller högst nästa fas enligt reglerna ovan. Välj ended endast om kunden tydligt avböjer fortsatt samtal eller ber att bli lämnad i fred.`;
+}
+
+// ─── Streaming Claude-anrop ──────────────────────────────────────────────────
+async function analyzeStreaming(text) {
+  if (!hasSession() || isStreaming) return;
+
+  isStreaming = true;
+  showCallError('');
+  syncCallUI();
+  conversationHistory.push({ role: 'user', content: 'Kunden sa: "' + text + '"' });
+
+  // Bygg streaming UI
+  const suggestionArea = document.getElementById('suggestion-area');
+  suggestionArea.innerHTML = '';
+
+  const streamCard = document.createElement('div');
+  streamCard.className = 'stream-card';
+
+  const streamLabel = document.createElement('div');
+  streamLabel.className = 'stream-label';
+  streamLabel.textContent = 'Tar fram förslag';
+
+  const streamText = document.createElement('span');
+  streamText.id = 'stream-text';
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+
+  streamCard.appendChild(streamLabel);
+  streamCard.appendChild(streamText);
+  streamCard.appendChild(cursor);
+  suggestionArea.appendChild(streamCard);
+
+  setStatus('Tar fram förslag');
+
+  let fullText = '';
+
+  try {
+    const result = await coachRequest({
+      action: 'suggest',
+      transcript: text,
+      history: conversationHistory.slice(-24),
+      currentPhase: salesPhase,
+      systemPrompt: buildSystemPrompt(),
+    });
+    fullText = result.text;
+    salesPhase = result.phase;
+    updateSalesPhaseBadge();
+    streamText.textContent = fullText;
+    suggestionArea.scrollTop = suggestionArea.scrollHeight;
+
+    cursor.remove();
+    streamLabel.textContent = 'AI-förslag';
+    renderParsedSuggestion(fullText, suggestionArea, streamCard, result.sources || []);
+    conversationHistory.push({ role: 'assistant', content: fullText });
+    if (salesPhase === 'ended') {
+      pendingText = '';
+      finishConversation();
+    }
+
+  } catch (err) {
+    const errorCard = document.createElement('div');
+    errorCard.className = 'error-card';
+    errorCard.textContent = `Förslaget kunde inte hämtas: ${err.message || 'Kontrollera anslutningen och försök igen.'}`;
+    suggestionArea.replaceChildren(errorCard);
+    pendingText = text + ' ' + pendingText;
+    conversationHistory.pop();
+    showCallError(err.message || 'Anslutningsfel. Kontrollera nätverket och försök igen.');
+  }
+
+  isStreaming = false;
+  updateAnalyzeBtn(pendingText.trim().length > 0);
+  syncCallUI();
+  setStatus(callPhase === 'finished' ? 'Samtalet är avslutat' : isListening ? 'Lyssnar' : 'Lyssning stoppad');
+}
+
+function renderParsedSuggestion(raw, area, streamCard, sources = []) {
+  streamCard.innerHTML = '';
+  const content = document.createElement('div');
+  content.className = 'suggestion-content';
+  content.textContent = '“' + raw.trim() + '”';
+  const footer = document.createElement('div');
+  footer.className = 'suggestion-footer';
+  if (sources.length) {
+    const sourceLabel = document.createElement('span');
+    sourceLabel.textContent = `Källor: ${[...new Set(sources.map((source) => source.title))].join(', ')}`;
+    sourceLabel.style.cssText = 'font-size:11px;color:var(--muted-foreground);margin-right:auto';
+    footer.appendChild(sourceLabel);
+  }
+  const used = document.createElement('button');
+  used.className = 'used-control';
+  used.setAttribute('aria-pressed', 'false');
+  used.textContent = '✓ Markera som använt';
+  used.onclick = () => {
+    const pressed = used.getAttribute('aria-pressed') !== 'true';
+    used.setAttribute('aria-pressed', String(pressed));
+    used.textContent = pressed ? '✓ Använt' : '✓ Markera som använt';
+  };
+  footer.appendChild(used);
+  streamCard.append(content, footer);
+}
+
+function addTag(parent, type, label, text) {
+  const wrap = document.createElement('div');
+  wrap.style.marginBottom = '8px';
+  const tag = document.createElement('div');
+  tag.className = 'badge';
+  tag.style.cssText = type === 'tip'
+    ? 'background:#EAF3DE;color:#3B6D11;margin-bottom:4px;display:block;width:fit-content;'
+    : 'background:#E6F1FB;color:#185FA5;margin-bottom:4px;display:block;width:fit-content;';
+  tag.textContent = label;
+  const p = document.createElement('p');
+  p.style.cssText = 'font-size:14px;line-height:1.6;color:#1a1a18;';
+  p.textContent = text;
+  wrap.appendChild(tag);
+  wrap.appendChild(p);
+  parent.appendChild(wrap);
+}
+
+// ─── Cooldown-bar ────────────────────────────────────────────────────────────
+function startCooldownBar() {
+  const wrap = document.getElementById('cooldown-bar-wrap');
+  const bar = document.getElementById('cooldown-bar');
+  wrap.style.display = 'block';
+  bar.style.width = '0%';
+  bar.style.transition = 'none';
+  setTimeout(() => {
+    bar.style.transition = `width ${COOLDOWN_MS}ms linear`;
+    bar.style.width = '100%';
+  }, 50);
+  setTimeout(() => { wrap.style.display = 'none'; }, COOLDOWN_MS + 200);
+}
+
+// ─── Web Speech API ──────────────────────────────────────────────────────────
+function setupRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showCallError('Taligenkänning stöds inte här. Öppna sidan i Chrome eller Edge.'); return null; }
+
+  const r = new SR();
+  r.lang = 'sv-SE';
+  r.continuous = true;
+  r.interimResults = true;
+
+  r.onresult = (event) => {
+    if (!isListening || recognition !== r) return;
+    let interim = '';
+    let final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    showInterim(interim);
+    if (final.trim()) {
+      removeInterim();
+      addTranscript(final.trim());
+      pendingText += ' ' + final.trim();
+      updateAnalyzeBtn(true);
+    }
+  };
+
+  r.onerror = (e) => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    if (recognition !== r) return;
+    isListening = false;
+    const message = e.error === 'not-allowed' || e.error === 'service-not-allowed'
+      ? 'Mikrofonåtkomst nekades. Tillåt mikrofonen i webbläsarens webbplatsinställningar och försök igen.'
+      : e.error === 'audio-capture' ? 'Ingen mikrofon hittades. Anslut en mikrofon och försök igen.'
+      : e.error === 'network' ? 'Webbläsarens taligenkänning tappade anslutningen till sin tjänst. Det behöver inte betyda att ditt internet är nere. Text som redan fångats finns kvar; tryck på Återuppta lyssning.'
+      : 'Taligenkänningen avbröts. Text som redan fångats finns kvar; tryck på Återuppta lyssning.';
+    showCallError(message);
+    syncCallUI();
+  };
+  r.onend = () => { if (isListening && recognition === r) setTimeout(() => {
+    if (isListening && recognition === r) {
+      try { r.start(); } catch { isListening = false; showCallError('Lyssningen kunde inte återupptas. Försök igen.'); syncCallUI(); }
+    }
+  }, 150); };
+
+  return r;
+}
+
+// ─── Analysknapp ────────────────────────────────────────────────────────────
+function updateAnalyzeBtn(hasText) {
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = !hasText || isStreaming || callPhase !== 'active';
+  btn.classList.toggle('ready', !btn.disabled);
+  btn.querySelector('span').textContent = isStreaming ? 'Tar fram förslag…' : 'Ge mig ett förslag';
+}
+
+function showInterim(text) {
+  if (!text) { removeInterim(); return; }
+  const area = document.getElementById('transcript-area');
+  if (!interimEl) { interimEl = document.createElement('div'); interimEl.className = 'interim-text'; area.appendChild(interimEl); }
+  interimEl.textContent = text + '…';
+  area.scrollTop = area.scrollHeight;
+}
+function removeInterim() { if (interimEl) { interimEl.remove(); interimEl = null; } }
+
+function addTranscript(text) {
+  const area = document.getElementById('transcript-area');
+  area.querySelectorAll('.empty-state').forEach(e => e.remove());
+  const wrap = document.createElement('div'); wrap.className = 'msg-wrap';
+  const lbl = document.createElement('div'); lbl.className = 'msg-label';
+  lbl.textContent = new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const msg = document.createElement('div'); msg.className = 'msg'; msg.textContent = text;
+  wrap.appendChild(lbl); wrap.appendChild(msg); area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+function setStatus(html) { document.getElementById('status-bar').innerHTML = html; }
+
+// ─── Samtalsinledning ────────────────────────────────────────────────────────
+function showFixedIntro() {
+  const name = document.getElementById('department-profile').value;
+  const profile = playbookProfiles[name] || {};
+  const intro = profile.intro || 'Försäljningschefen har inte sparat någon fast inledning ännu.';
+  document.getElementById('intro-box').style.display = 'block';
+  document.getElementById('intro-text').textContent = intro;
+  document.getElementById('intro-status').textContent = 'Fast text från admin';
+  document.getElementById('employee-intro-status').textContent = 'Fast text från admin';
+}
+
+async function generateIntro() {
+  showFixedIntro();
+}
+
+async function copyIntro() { await copyText(document.getElementById('intro-text').textContent, 'copy-btn', 'Kopiera inledning'); }
+
+function toggleListening() { isListening ? stopListening() : startListening(); }
+function startListening() {
+  if (callPhase === 'finished' || isListening) return;
+  if (!hasSession()) { showCallError('Sessionen har gått ut. Logga in igen.'); return; }
+  if (editorDirty()) { showCallError('Spara eller återställ avdelningsändringarna i Inställningar innan du börjar.'); return; }
+  const next = setupRecognition();
+  if (!next) return;
+  const firstStart = callPhase === 'ready';
+  recognition = next;
+  isListening = true;
+  showCallError('');
+  try { recognition.start(); } catch { isListening = false; showCallError('Mikrofonen kunde inte startas. Kontrollera behörigheten och försök igen.'); syncCallUI(); return; }
+  callPhase = 'active';
+  if (firstStart) document.getElementById('intro-box').style.display = 'none';
+  syncCallUI();
+  setStatus('Lyssnar');
+}
+function stopListening() {
+  isListening = false;
+  const previous = recognition;
+  recognition = null;
+  if (previous) { try { previous.stop(); } catch {} }
+  removeInterim();
+  syncCallUI();
+  setStatus(callPhase === 'finished' ? 'Samtalet är avslutat' : 'Lyssning stoppad');
+}
+function finishConversation() {
+  if (callPhase !== 'active') return;
+  callPhase = 'finished';
+  stopListening();
+  showCallError('');
+  syncCallUI();
+}
+function hasConversation() { return callPhase !== 'ready' || conversationHistory.length > 0 || document.querySelector('#transcript-area .msg') !== null; }
+function syncCallUI() {
+  const active = callPhase === 'active';
+  const finished = callPhase === 'finished';
+  document.getElementById('start-call-btn').classList.toggle('hidden', callPhase !== 'ready');
+  document.getElementById('mic-btn').classList.toggle('hidden', !active);
+  document.getElementById('end-call-btn').classList.toggle('hidden', !active);
+  document.getElementById('intro-btn').classList.toggle('hidden', !active);
+  document.getElementById('copy-transcript-btn').classList.toggle('hidden', !finished);
+  document.getElementById('copy-transcript-btn').disabled = !document.querySelector('#transcript-area .msg');
+  document.getElementById('new-call-btn').classList.toggle('hidden', !finished);
+  document.getElementById('new-call-btn').disabled = isStreaming;
+  document.getElementById('mic-label').textContent = isListening ? 'Stoppa lyssning' : 'Återuppta lyssning';
+  document.getElementById('call-heading').textContent = finished ? 'Samtalet är avslutat' : active ? 'Ditt pågående samtal' : 'Ditt nästa samtal';
+  updateSalesPhaseBadge();
+  const status = document.getElementById('call-status');
+  status.classList.toggle('listening', isListening && !isStreaming);
+  const error = document.getElementById('call-error').textContent;
+  status.classList.toggle('error', Boolean(error));
+  document.getElementById('call-status-text').textContent = error ? 'Se felmeddelandet' : isStreaming ? 'Tar fram förslag' : finished ? 'Avslutat' : isListening ? 'Lyssnar' : active ? 'Lyssning stoppad' : 'Redo att börja';
+  document.getElementById('customer-type').disabled = active || finished;
+  document.getElementById('employee-customer-type').disabled = active || finished;
+  document.getElementById('settings-btn').disabled = active || isStreaming;
+  updateAnalyzeBtn(pendingText.trim().length > 0);
+}
+function updateSalesPhaseBadge() {
+  const labels = {
+    opening: 'Fas 1 · Inledning',
+    mapping: 'Fas 2 · Kartläggning',
+    problem: 'Fas 3 · Behovsbild',
+    summary: 'Fas 3.5 · Bekräftelse',
+    meeting: 'Fas 4 · Möte',
+    ended: 'Avslutat',
+  };
+  const badge = document.getElementById('sales-phase-badge');
+  if (badge) badge.textContent = labels[salesPhase] || labels.opening;
+}
+function showCallError(message) { document.getElementById('call-error').textContent = message; syncCallUI(); }
+function toggleIntro() { const box = document.getElementById('intro-box'); if (box.style.display === 'none') showFixedIntro(); else box.style.display = 'none'; }
+function refreshDepartment() {
+  document.getElementById('active-department').textContent = document.getElementById('department-profile').value;
+  renderReadonlySummary();
+  if (callPhase === 'ready') showFixedIntro();
+}
+function openInstructions() { renderReadonlySummary(); document.getElementById('instructions-dialog').showModal(); }
+function editorSnapshot() {
+  return JSON.stringify({ script: document.getElementById('always-script').value, intro: document.getElementById('fixed-intro').value,
+    tips: [...document.querySelectorAll('#tips-list input')].map(e => e.value), objections: [...document.querySelectorAll('#objections-list input')].map(e => e.value),
+    product: document.getElementById('product-input').value });
+}
+function editorDirty() { return Boolean(savedEditor) && editorSnapshot() !== savedEditor; }
+function markEditorDirty() {
+  if (loadingProfile || !savedEditor) return;
+  const dirty = editorDirty();
+  const status = document.getElementById('playbook-status');
+  status.textContent = dirty ? 'Osparade ändringar' : '';
+  status.classList.toggle('dirty', dirty);
+}
+function discardEditor() { loadPlaybookProfile(activeProfileName); }
+function requestProfileChange(name) {
+  document.getElementById('department-profile').value = activeProfileName;
+  if (editorDirty()) { askConfirmation('Osparade ändringar', 'Byt avdelning utan att spara ändringarna?', 'Byt avdelning', () => loadPlaybookProfile(name)); return; }
+  loadPlaybookProfile(name);
+}
+function openSettings() { if (currentRole !== 'admin' || callPhase === 'active' || isStreaming) return; document.getElementById('settings-dialog').showModal(); refreshRagDocuments(); }
+async function inviteEmployee() {
+  if (currentRole !== 'admin') return;
+  const input = document.getElementById('invite-email');
+  const button = document.getElementById('invite-employee-btn');
+  const status = document.getElementById('invite-status');
+  button.disabled = true;
+  status.textContent = '';
+  try {
+    const result = await coachRequest({ action: 'invite_employee', email: input.value.trim() });
+    status.textContent = result.existingUser
+      ? 'Kontot finns redan. Be personen logga in med den e-postadressen för att ansluta till företaget.'
+      : 'Inbjudan skickad. Användaren väljer lösenord via länken i e-postmeddelandet.';
+    input.value = '';
+  } catch (error) {
+    status.textContent = error.message || 'Inbjudan kunde inte skickas.';
+  } finally {
+    button.disabled = false;
+  }
+}
+function closeSettings() {
+  if (editorDirty()) { askConfirmation('Osparade ändringar', 'Stäng utan att spara avdelningens ändringar?', 'Stäng utan att spara', () => { discardEditor(); document.getElementById('settings-dialog').close(); }); return; }
+  document.getElementById('settings-dialog').close();
+  if (hasSession()) showCallError('');
+}
+function askConfirmation(title, message, label, action) {
+  confirmationAction = action;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-accept').textContent = label;
+  const dialog = document.getElementById('confirm-dialog');
+  if (!dialog.open) dialog.showModal();
+}
+function resolveConfirmation(accepted) {
+  const action = confirmationAction;
+  confirmationAction = null;
+  document.getElementById('confirm-dialog').close();
+  if (accepted && action) action();
+}
+async function copyTranscript() {
+  const text = [...document.querySelectorAll('#transcript-area .msg-wrap')].map(wrap => [wrap.querySelector('.msg-label')?.textContent, wrap.querySelector('.msg')?.textContent].filter(Boolean).join(' · ')).join('\n\n');
+  await copyText(text, 'copy-transcript-btn', 'Kopiera samtalstext');
+}
+async function copyText(text, id, label) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const button = document.getElementById(id);
+    button.textContent = '✓ Kopierat';
+    setTimeout(() => { button.textContent = label; }, 2000);
+  } catch { showCallError('Kopiering kunde inte göras. Markera texten och kopiera den manuellt.'); }
+}
+document.getElementById('admin-config').addEventListener('input', markEditorDirty);
+document.getElementById('settings-dialog').addEventListener('cancel', event => { event.preventDefault(); closeSettings(); });
+document.getElementById('confirm-dialog').addEventListener('cancel', () => { confirmationAction = null; });
+window.addEventListener('beforeunload', event => { if (editorDirty() || hasConversation()) { event.preventDefault(); event.returnValue = ''; } });
+
+initializeInvitation();
+syncCallUI();
+</script></body></html>
